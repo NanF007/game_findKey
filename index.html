@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>找钥匙游戏</title>
+  <style>
+    body {
+      padding: 0;
+      margin: 0;
+    }
+
+    /* 基础样式 */
+    .box {
+      box-sizing: border-box;
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #a1d0f8;
+      position: relative;
+    }
+
+    /* 重新开始按钮 */
+    .restart-button {
+      position: fixed;
+      right: 10px;
+      top: 5px;
+      z-index: 1000;
+      padding: 12px 24px;
+      background: rgba(255, 255, 255, 0.9);
+      border: 2px solid #ff4757;
+      border-radius: 30px;
+      box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);
+      font-size: 18px;
+      color: #ff4757;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .restart-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 71, 87, 0.4);
+      background: #fff;
+    }
+
+    /* 左侧提示列表 */
+    .leftTipsList {
+      box-sizing: border-box;
+      position: absolute;
+      left: 10px;
+      top: 100px;
+    }
+
+    .leftTipsList .item {
+      box-sizing: border-box;
+      display: none;
+      justify-content: space-evenly;
+      align-items: center;
+      padding: 10px 15px;
+      border-radius: 6px;
+      background-color: #ffffff;
+      border: 2px solid #04276d;
+      transition: all 0.3s;
+      margin-bottom: 15px;
+      display: none;
+      /* 默认隐藏 */
+      opacity: 0.6;
+      position: relative;
+    }
+
+    .leftTipsList .item.active {
+      display: flex !important;
+      /* 当前激活的显示 */
+      opacity: 1;
+      animation: pulse 1.5s infinite;
+      border-color: #ff4757;
+    }
+
+    .leftTipsList .item.found {
+      display: flex !important;
+      /* 已找到的保持显示 */
+      opacity: 0.6;
+    }
+
+    .leftTipsList .item.found::after {
+      content: "✅";
+      position: absolute;
+      right: 5px;
+      top: 5px;
+    }
+
+    .leftTipsList .item .icon {
+      width: 50px;
+      height: 50px;
+      margin-right: 5px;
+    }
+
+    .leftTipsList .item .icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .leftTipsList .item .text {
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    .leftTipsList .item .text span {
+      padding: 0 5px;
+    }
+
+    /* 提示框 */
+    .hint-box {
+      position: fixed;
+      top: 20%;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 20px 40px;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      font-size: 24px;
+      color: #4874cb;
+      z-index: 999;
+      opacity: 0;
+      transition: all 0.5s ease;
+    }
+
+    .hint-box.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    /* 主容器 */
+    .container {
+      box-sizing: border-box;
+      position: relative;
+      margin: 0 auto;
+    }
+
+    /* 顶部粉色区域 */
+    .topPinkList {
+      box-sizing: border-box;
+      width: 800px;
+      height: 330px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .topPinkList .pinkList {
+      box-sizing: border-box;
+      width: 70px;
+      position: absolute;
+      bottom: 0;
+    }
+
+    .topPinkList .pinkList.pink1 {
+      left: 175px;
+    }
+
+    .topPinkList .pinkList.pink2 {
+      left: 315px;
+    }
+
+    .topPinkList .pinkList.pink3 {
+      left: 525px;
+    }
+
+    .pinkBox {
+      box-sizing: border-box;
+      width: 70px;
+      height: 70px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border: 1px solid #000;
+      background-color: #ec97a5;
+      cursor: pointer;
+    }
+
+    .pinkBox1 {
+      background-color: #F0AA93;
+    }
+
+    .pinkBox2 {
+      background-color: #F3BAC3;
+    }
+
+    .topPinkList .canzhao {
+      width: 70px;
+      height: 70px;
+      box-sizing: border-box;
+      margin-bottom: 35px;
+    }
+
+    /* 中间蓝色区域 */
+    .centerBlueList {
+      position: relative;
+      width: 800px;
+      margin: 0 auto;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+    }
+
+    .blueBox {
+      box-sizing: border-box;
+      width: 70px;
+      height: 70px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border: 1px solid #000;
+      background-color: #4874cb;
+      cursor: pointer;
+    }
+
+    .centerBlueList .left {
+      margin: 0px;
+      margin-right: 35px;
+    }
+
+    .centerBlueList .right {
+      margin: 0px;
+      margin-left: 35px;
+    }
+
+    .centerBlueList .canzhao {
+      /* margin-right: 50px; */
+      width: 70px;
+      height: 70px;
+    }
+
+    /* 底部粉色区域 */
+    .bottomPinkList {
+      box-sizing: border-box;
+      width: 800px;
+      height: 260px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .bottomPinkList .pinkList {
+      box-sizing: border-box;
+      width: 70px;
+      position: absolute;
+      top: 0;
+    }
+
+    .bottomPinkList .pinkList.pink1 {
+      left: 175px;
+    }
+
+    .bottomPinkList .pinkList.pink2 {
+      left: 385px;
+    }
+
+    .bottomPinkList .canzhao {
+      width: 70px;
+      height: 70px;
+      box-sizing: border-box;
+      margin-top: 35px;
+    }
+
+    /* 钥匙图片样式 */
+    .yuechi {
+      display: none;
+      width: 90%;
+      height: 90%;
+      object-fit: contain;
+      animation: bounce 0.8s ease;
+    }
+
+    .canzhao img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .yuechi.found {
+      display: block !important;
+    }
+
+    /* 动画 */
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.05);
+      }
+
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    @keyframes bounce {
+      0% {
+        transform: scale(0);
+      }
+
+      50% {
+        transform: scale(1.2);
+      }
+
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    /* 悬停效果 */
+    .leftTipsList .item:hover {
+      transform: scale(1.05);
+      cursor: help;
+    }
+
+    /* 帮助按钮样式（原Vue中的extend） */
+    .help-button {
+      position: fixed;
+      right: 30px;
+      top: 20px;
+      z-index: 1000;
+      padding: 12px 24px;
+      background: rgba(255, 255, 255, 0.9);
+      border: 2px solid #4874cb;
+      border-radius: 30px;
+      box-shadow: 0 4px 15px rgba(72, 116, 203, 0.3);
+      font-size: 18px;
+      color: #4874cb;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .help-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(72, 116, 203, 0.4);
+      background: #fff;
+    }
+
+    /* 过渡动画 */
+    .hint-enter-active,
+    .hint-leave-active {
+      transition: all 0.5s ease;
+    }
+
+    .hint-enter-from,
+    .hint-leave-to {
+      opacity: 0;
+      transform: translate(-50%, -20px);
+    }
+
+    /* 移动端适配 */
+    @media (max-width: 768px) {
+      .container {
+        transform: scale(0.8);
+      }
+
+      .leftTipsList {
+        top: 20px;
+        left: 5px;
+      }
+
+      .restart-button {
+        right: 20px;
+        padding: 8px 16px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="box">
+    <button class="restart-button" onclick="resetGame(event)">
+      <span>🔄</span> 重新开始
+    </button>
+
+    <div class="leftTipsList" id="hintList"></div>
+
+    <div class="hint-box" id="hintBox"></div>
+
+    <div class="container">
+      <div class="topPinkList">
+        <!-- 第一列两个粉色 -->
+        <div class="pinkList pink1">
+          <div class="pinkBox pinkBox1" onclick="findKey(event)"></div>
+          <div class="pinkBox pinkBox2" onclick="findKey(event)"></div>
+        </div>
+        <!-- 第二列三个粉色 -->
+        <div class="pinkList pink2">
+          <div class="canzhao">
+            <img src="./img/yueliang.png" alt="" />
+          </div>
+          <div class="pinkBox aixin" onclick="findKey(event)" data-key-type="aixin">
+            <img class="yuechi" src="./img/yuechi.png" alt="" />
+          </div>
+          <div class="pinkBox pinkBox2" onclick="findKey(event)"></div>
+          <div class="pinkBox" onclick="findKey(event)"></div>
+        </div>
+        <!-- 第三列两个粉色 -->
+        <div class="pinkList pink3">
+          <div class="canzhao">
+            <img src="./img/xingxing.png" alt="" />
+          </div>
+          <div class="pinkBox xiaolian" onclick="findKey(event)" data-key-type="xiaolian">
+            <img class="yuechi" src="./img/yuechi1.png" alt="" />
+          </div>
+          <div class="pinkBox" onclick="findKey(event)"></div>
+        </div>
+      </div>
+      <!-- 中间的蓝色盒子 -->
+      <div class="centerBlueList">
+        <div class="canzhao left">
+          <img src="./img/xiaolian.png" alt="" />
+        </div>
+        <div class="blueBox" onclick="findKey(event)"></div>
+        <div class="blueBox yueliang" onclick="findKey(event)" data-key-type="yueliang">
+          <img class="yuechi" src="./img/yuechi2.png" alt="" />
+        </div>
+        <div class="blueBox" onclick="findKey(event)"></div>
+        <div class="blueBox taiyang" onclick="findKey(event)" data-key-type="taiyang">
+          <img class="yuechi" src="./img/yuechi3.png" alt="" />
+        </div>
+        <div class="blueBox" onclick="findKey(event)"></div>
+        <div class="blueBox" onclick="findKey(event)"></div>
+        <div class="blueBox" onclick="findKey(event)"></div>
+        <div class="blueBox xingxing" onclick="findKey(event)" data-key-type="xingxing">
+          <img class="yuechi" src="./img/yuechi4.png" alt="" />
+        </div>
+        <div class="canzhao right">
+          <img src="./img/aixin.png" alt="" />
+        </div>
+      </div>
+      <!-- 底部粉色盒子 -->
+      <div class="bottomPinkList">
+        <!-- 第一列两个粉色 -->
+        <div class="pinkList pink1">
+          <div class="pinkBox pinkBox1" onclick="findKey(event)"></div>
+          <div class="pinkBox pinkBox2" onclick="findKey(event)"></div>
+          <div class="canzhao">
+            <img src="./img/taiyang.png" alt="" />
+          </div>
+        </div>
+        <!-- 第二列两个粉色 -->
+        <div class="pinkList pink2">
+          <div class="pinkBox pinkBox2" onclick="findKey(event)"></div>
+          <div class="pinkBox" onclick="findKey(event)"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 游戏状态管理
+    const state = {
+      showHint: false,
+      hintText: '',
+      currentHintIndex: 0,
+      keys: [{
+        type: 'xiaolian',
+        src: './img/xiaolian.png',
+        found: false,
+        hint: '笑脸提示 →7↑2',
+        text1: '→',
+        text2: '7',
+        text3: '↑',
+        text4: '2'
+      },
+      {
+        type: 'aixin',
+        src: './img/aixin.png',
+        found: false,
+        hint: '爱心提示 ←5↑3',
+        text1: '←',
+        text2: '5',
+        text3: '↑',
+        text4: '3'
+      },
+      {
+        type: 'taiyang',
+        src: './img/taiyang.png',
+        found: false,
+        hint: '太阳提示 ↑3 →2',
+        text1: '↑',
+        text2: '3',
+        text3: '→',
+        text4: '2'
+      },
+      {
+        type: 'xingxing',
+        src: './img/xingxing.png',
+        found: false,
+        hint: '星星提示 ↓3→1',
+        text1: '↓',
+        text2: '3',
+        text3: '→',
+        text4: '1'
+      },
+      {
+        type: 'yueliang',
+        src: './img/yueliang.png',
+        found: false,
+        hint: '月亮提示 ↓4←2',
+        text1: '↓',
+        text2: '4',
+        text3: '←',
+        text4: '2'
+      }
+      ],
+      audio: {
+        success: new Audio('./audio/success.mp3'),
+        fail: new Audio('./audio/fail.mp3')
+      }
+    }
+
+    // DOM元素缓存
+    const dom = {
+      hintList: document.getElementById('hintList'),
+      hintBox: document.getElementById('hintBox')
+    }
+
+    // 初始化提示列表
+    function initHintList() {
+      dom.hintList.innerHTML = '';
+      state.keys.forEach((key, index) => {
+        const item = document.createElement('div');
+        let className = 'item';
+
+        if (key.found) className += ' found';
+        if (index === state.currentHintIndex) className += ' active';
+
+        item.className = className;
+        item.innerHTML = `
+				            <div class="icon">
+				                <img src="${key.src}" alt="${key.type}">
+				            </div>
+				            <div class="text">
+				                <span>${key.text1}</span>
+				                <span>${key.text2}</span>
+				                <span>${key.text3}</span>
+				                <span>${key.text4}</span>
+				            </div>
+				        `;
+        dom.hintList.appendChild(item);
+      });
+    }
+
+    // 显示提示信息
+    function showHint(message, isError = false) {
+      dom.hintBox.textContent = message;
+      dom.hintBox.classList.add('show');
+      if (isError) state.audio.fail.play();
+      else state.audio.success.play();
+
+      setTimeout(() => {
+        dom.hintBox.classList.remove('show');
+      }, 2000);
+    }
+
+    // 游戏逻辑
+    // 修改后的findKey函数
+    function findKey(event) {
+      const box = event.currentTarget;
+      const keyType = box.dataset.keyType;
+      const currentKey = state.keys[state.currentHintIndex];
+
+      if (!currentKey) {
+        showHint('🎉');
+        // 全部找到啦！
+        return;
+      }
+
+      if (!keyType) {
+        showHint('😅', true);
+        // 这个盒子没有钥匙哦
+        return;
+      }
+
+      if (keyType !== currentKey.type) {
+        showHint('❌', true);
+        // 这个不是当前要找的钥匙哦！
+        return;
+      }
+
+      // 找到正确钥匙的逻辑
+      const keyImg = box.querySelector('.yuechi');
+      if (keyImg) {
+        currentKey.found = true;
+        state.currentHintIndex++;
+        keyImg.classList.add('found');
+        showHint('🎉');
+        // 找到钥匙啦！
+
+        // 更新提示列表
+        initHintList();
+
+        // 检查是否全部找到
+        if (state.currentHintIndex >= state.keys.length) {
+          showHint('🎉');
+          // 恭喜！所有钥匙都找到了！
+        }
+      }
+    }
+
+    // 重置游戏
+    function resetGame(event) {
+      event.stopPropagation();
+
+      // 重置状态
+      state.keys.forEach(key => key.found = false);
+      state.currentHintIndex = state.keys.findIndex(k => !k.found);
+
+      // 重置DOM
+      document.querySelectorAll('.yuechi').forEach(img => {
+        img.classList.remove('found');
+      });
+
+      // 初始化提示
+      initHintList();
+      showHint('🔄');
+      // 游戏已重置，重新开始吧！
+    }
+
+    // 初始化游戏
+    document.addEventListener('DOMContentLoaded', () => {
+      // 初始状态
+      state.currentHintIndex = state.keys.findIndex(k => !k.found);
+      initHintList();
+    });
+  </script>
+</body>
+
+</html>
